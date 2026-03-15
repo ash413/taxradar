@@ -33,6 +33,22 @@ export default function Home() {
   // Compute deduction summary
   const summary = result ? computeSummary(result.results) : null;
 
+  const downloadReport = async (format: "csv" | "pdf") => {
+    if (!result) return;
+    const res = await fetch(`http://localhost:8000/api/export/${format}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ results: result.results, summary: result.summary, filename: result.filename }),
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `deduction_report.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="min-h-screen" style={{ background: "#0a0a0f", fontFamily: "'DM Mono', monospace" }}>
       <style>{`
@@ -64,11 +80,23 @@ export default function Home() {
           </div>
         </div>
         {result && (
-          <button onClick={() => { setResult(null); setError(null); }}
-            style={{ color: "var(--muted)", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}
-            className="hover:text-white transition-colors">
-            <X size={14} /> New upload
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => downloadReport("csv")}
+              style={{ fontSize: 12, padding: "6px 14px", borderRadius: 8, border: "1px solid var(--border)", color: "var(--muted)", background: "var(--surface)" }}
+              className="hover:text-white transition-colors">
+              ↓ CSV
+            </button>
+            <button onClick={() => downloadReport("pdf")}
+              style={{ fontSize: 12, padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(0,255,136,0.3)", color: "var(--green)", background: "rgba(0,255,136,0.08)" }}
+              className="hover:opacity-80 transition-opacity">
+              ↓ PDF Report
+            </button>
+            <button onClick={() => { setResult(null); setError(null); }}
+              style={{ color: "var(--muted)", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}
+              className="hover:text-white transition-colors">
+              <X size={14} /> New upload
+            </button>
+          </div>
         )}
       </header>
 
