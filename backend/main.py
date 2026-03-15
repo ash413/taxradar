@@ -5,6 +5,11 @@ import uvicorn
 from parsers.csv_parser import parse_csv_upload
 from models import ParsedUploadResponse
 
+from dotenv import load_dotenv
+load_dotenv()
+
+from classifier import classify_transaction
+
 app = FastAPI(title="Tax Deduction Hunter API", version="0.1.0")
 
 app.add_middleware(
@@ -31,6 +36,14 @@ async def upload_csv(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Failed to parse CSV: {str(e)}")
     
+    return result
+
+@app.post("/api/classify")
+def classify(payload: dict):
+    description = payload.get("description", "")
+    amount = payload.get("amount", 0.0)
+    date = payload.get("date", "unknown")
+    result = classify_transaction(description, amount, date)
     return result
 
 if __name__ == "__main__":
