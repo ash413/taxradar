@@ -38,6 +38,7 @@ async def upload_csv(file: UploadFile = File(...)):
     
     return result
 
+
 @app.post("/api/classify")
 def classify(payload: dict):
     description = payload.get("description", "")
@@ -45,6 +46,38 @@ def classify(payload: dict):
     date = payload.get("date", "unknown")
     result = classify_transaction(description, amount, date)
     return result
+
+
+@app.post("/api/upload/classify")
+async def upload_and_classify(file: UploadFile = File(...)):
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported.")
+    
+    contents = await file.read()
+    
+    try:
+        parsed = parse_csv_upload(contents, filename=file.filename)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Failed to parse CSV: {str(e)}")
+    
+    classified = []
+    for tx in parsed.transactions:
+        classification = classify_transaction(
+            description=tx.description,
+            amount=tx.amount,
+            date=tx.date or "unknown"
+        )
+        classified.append({
+            "transaction": tx.model_dump(),
+            "classification": classification
+        })
+    
+    return {
+        "filename": parsed.filename,
+        "summary": parsed.summary.model_dump(),
+        "results": classified
+    }
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
