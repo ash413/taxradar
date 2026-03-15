@@ -10,6 +10,10 @@ load_dotenv()
 
 from classifier import classify_transaction
 
+from fastapi.responses import Response
+from exporter import generate_csv_report, generate_pdf_report
+
+
 app = FastAPI(title="Tax Deduction Hunter API", version="0.1.0")
 
 app.add_middleware(
@@ -77,6 +81,26 @@ async def upload_and_classify(file: UploadFile = File(...)):
         "summary": parsed.summary.model_dump(),
         "results": classified
     }
+
+@app.post("/api/export/csv")
+def export_csv(payload: dict):
+    csv_bytes = generate_csv_report(
+        results=payload["results"],
+        summary=payload["summary"],
+        filename=payload.get("filename", "transactions.csv")
+    )
+    return Response(content=csv_bytes, media_type="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=deduction_report.csv"})
+
+@app.post("/api/export/pdf")
+def export_pdf(payload: dict):
+    pdf_bytes = generate_pdf_report(
+        results=payload["results"],
+        summary=payload["summary"],
+        filename=payload.get("filename", "transactions.csv")
+    )
+    return Response(content=pdf_bytes, media_type="application/pdf",
+                    headers={"Content-Disposition": "attachment; filename=deduction_report.pdf"})
 
 
 if __name__ == "__main__":
