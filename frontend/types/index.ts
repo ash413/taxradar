@@ -38,3 +38,29 @@ export interface Transaction {
     summary: ParseSummary;
     results: ClassifiedTransaction[];
   }
+
+
+  export interface LineItem {
+    description: string;
+    amount: number;
+  }
+  
+  export interface ParsedReceipt {
+    merchant: string | null;
+    date: string | null;
+    total: number | null;
+    subtotal: number | null;
+    tax: number | null;
+    payment_method: string;
+    line_items: LineItem[];
+    business_purpose_hint: string;
+  }
+  
+  export interface ReceiptResult {
+    success: boolean;
+    error?: string;
+    raw_text: string;
+    parsed: ParsedReceipt;
+    matched_transaction_id: string | null;
+    matched_transaction_description: string | null;
+  }
