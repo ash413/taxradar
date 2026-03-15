@@ -23,7 +23,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await fetch("http://localhost:8000/api/upload/classify", { method: "POST", body: formData });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/classify`, { method: "POST", body: formData });
       if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Upload failed"); }
       setResult(await res.json());
       setActiveTab("transactions");
@@ -37,7 +37,7 @@ export default function Home() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const res = await fetch("http://localhost:8000/api/upload/receipt", { method: "POST", body: formData });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/receipt`, { method: "POST", body: formData });
       if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Receipt upload failed"); }
       const data: ReceiptResult = await res.json();
       setReceipts(prev => [data, ...prev]);
@@ -54,7 +54,7 @@ export default function Home() {
 
   const downloadReport = async (format: "csv" | "pdf") => {
     if (!result) return;
-    const res = await fetch(`http://localhost:8000/api/export/${format}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/export/${format}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ results: result.results, summary: result.summary, filename: result.filename }),
