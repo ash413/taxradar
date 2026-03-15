@@ -13,6 +13,7 @@ from classifier import classify_transaction
 from fastapi.responses import Response
 from exporter import generate_csv_report, generate_pdf_report
 
+from ocr import process_receipt
 
 app = FastAPI(title="Tax Deduction Hunter API", version="0.1.0")
 
@@ -101,6 +102,18 @@ def export_pdf(payload: dict):
     )
     return Response(content=pdf_bytes, media_type="application/pdf",
                     headers={"Content-Disposition": "attachment; filename=deduction_report.pdf"})
+
+
+
+@app.post("/api/upload/receipt")
+async def upload_receipt(file: UploadFile = File(...)):
+    allowed = ["image/jpeg", "image/png", "image/jpg", "application/pdf"]
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Only JPG, PNG, or PDF files supported.")
+    
+    contents = await file.read()
+    result = process_receipt(contents, file.content_type)
+    return result
 
 
 if __name__ == "__main__":
